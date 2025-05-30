@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PacMyst v0.2</title>
+  <style>
+    body {
+      background: black;
+      color: #00FF99;
+      font-family: monospace;
+      text-align: center;
+      margin: 0;
+    }
+    h1 {
+      padding: 10px;
+    }
+    #gameCanvas {
+      display: block;
+      margin: 0 auto;
+      background: #111;
+      border: 2px solid #00FF99;
+    }
+    #scoreBoard {
+      margin: 10px;
+    }
+    button {
+      background: #00FF99;
+      color: black;
+      font-family: monospace;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌀 PacMyst v0.2</h1>
+  <div id="scoreBoard">Score: <span id="score">0</span></div>
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+  <div>
+    <button onclick="startGame('easy')">Easy</button>
+    <button onclick="startGame('hard')">Hard</button>
+  </div>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const tileSize = 20;
+    const rows = canvas.height / tileSize;
+    const cols = canvas.width / tileSize;
+
+    let score = 0;
+    let player = { x: 1, y: 1 };
+    let wraiths = [];
+    let keys = {};
+
+    let gameInterval;
+
+    document.addEventListener("keydown", (e) => {
+      keys[e.key] = true;
+    });
+    document.addEventListener("keyup", (e) => {
+      keys[e.key] = false;
+    });
+
+    function drawTile(x, y, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+    }
+
+    function drawMaze() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawTile(player.x, player.y, "#FFFF00");
+      wraiths.forEach(w => drawTile(w.x, w.y, "#FF0033"));
+    }
+
+    function updatePlayer() {
+      if (keys["ArrowUp"] && player.y > 0) player.y--;
+      if (keys["ArrowDown"] && player.y < rows - 1) player.y++;
+      if (keys["ArrowLeft"] && player.x > 0) player.x--;
+      if (keys["ArrowRight"] && player.x < cols - 1) player.x++;
+    }
+
+    function updateGame() {
+      updatePlayer();
+      score++;
+      document.getElementById("score").innerText = score;
+      drawMaze();
+    }
+
+    function startGame(mode) {
+      clearInterval(gameInterval);
+      score = 0;
+      player = { x: 1, y: 1 };
+      wraiths = mode === "hard" ? [{ x: 5, y: 5 }, { x: 10, y: 10 }] : [{ x: 5, y: 5 }];
+      gameInterval = setInterval(updateGame, 200);
+    }
+  </script>
+</body>
+</html>
