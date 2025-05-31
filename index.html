@@ -99,6 +99,34 @@
             font-size: 2em;
         }
 
+        .name-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #FFD700;
+            color: #fff;
+            padding: 10px;
+            font-size: 1.2em;
+            border-radius: 5px;
+            margin: 10px;
+            text-align: center;
+        }
+
+        .leaderboard {
+            margin: 20px 0;
+            font-size: 0.9em;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .leaderboard h3 {
+            color: #FFD700;
+            margin-bottom: 10px;
+        }
+
+        .leaderboard-entry {
+            padding: 5px;
+            border-bottom: 1px solid #333;
+        }
+
         .restart-btn {
             background: #0066ff;
             color: white;
@@ -107,7 +135,7 @@
             font-size: 1.2em;
             cursor: pointer;
             border-radius: 5px;
-            margin-top: 15px;
+            margin: 5px;
         }
 
         .restart-btn:hover {
@@ -150,7 +178,16 @@
     <div class="game-over" id="gameOver">
         <h2>Game Over</h2>
         <p>Final Score: <span id="finalScore">0</span></p>
+        <p>Level Reached: <span id="finalLevel">1</span></p>
+        <input type="text" class="name-input" id="playerName" placeholder="Enter your name" maxlength="15">
+        <br>
+        <button class="restart-btn" onclick="saveScore()">Save Score</button>
         <button class="restart-btn" onclick="restartGame()">Play Again</button>
+        
+        <div class="leaderboard" id="leaderboard">
+            <h3>🏆 MYSTCL Leaderboard</h3>
+            <div id="leaderboardList"></div>
+        </div>
     </div>
 
     <script>
@@ -173,8 +210,15 @@
                 this.powerMode = false;
                 this.powerModeTimer = 0;
                 
+                // In-memory leaderboard (session only)
+                this.leaderboard = [
+                    { name: "MYSTCL", score: 1000, level: 5 },
+                    { name: "Unicorn", score: 800, level: 4 },
+                    { name: "Pixie", score: 600, level: 3 }
+                ];
+                
                 this.maze = this.createMaze();
-                this.player = { x: 7, y: 11, direction: -1, nextDirection: -1 }; // -1 means stationary
+                this.player = { x: 7, y: 11, direction: -1, nextDirection: -1 };
                 this.ghosts = [
                     { x: 7, y: 6, direction: 0, color: '#ff0000', mode: 'scatter' },
                     { x: 6, y: 6, direction: 2, color: '#ffb8ff', mode: 'scatter' },
@@ -194,71 +238,111 @@
             }
             
             createMaze() {
-                // Smaller maze for bigger character
                 const maze = Array(this.rows).fill().map(() => Array(this.cols).fill(1));
                 
-                // Clear paths and add minimal walls for easy level 1
                 for (let y = 0; y < this.rows; y++) {
                     for (let x = 0; x < this.cols; x++) {
-                        // Border walls
+                        // Border walls always
                         if (x === 0 || x === this.cols - 1 || y === 0 || y === this.rows - 1) {
                             maze[y][x] = 0;
                         }
-                        // Very simple maze for level 1
+                        // Level 1 - Simple tutorial level
                         else if (this.level === 1) {
-                            // Just a few strategic walls
                             if ((x === 3 && y >= 3 && y <= 5) ||
                                 (x === 11 && y >= 3 && y <= 5) ||
                                 (x === 3 && y >= 9 && y <= 11) ||
                                 (x === 11 && y >= 9 && y <= 11) ||
                                 (y === 3 && x >= 6 && x <= 8) ||
                                 (y === 11 && x >= 6 && x <= 8)) {
-                                maze[y][x] = 0; // wall
+                                maze[y][x] = 0;
                             }
-                            // Ghost house (smaller)
                             else if (x >= 6 && x <= 8 && y >= 5 && y <= 7) {
                                 maze[y][x] = 3; // ghost house
                             }
-                            // Power pellets in corners
                             else if ((x === 2 && y === 2) || (x === 12 && y === 2) || 
                                     (x === 2 && y === 12) || (x === 12 && y === 12)) {
-                                maze[y][x] = 2; // power pellet
+                                maze[y][x] = 2; // power pellets
                             }
                             else {
-                                maze[y][x] = 1; // regular pellet
+                                maze[y][x] = 1;
                             }
                         }
-                        // More complex mazes for higher levels
-                        else {
-                            if (
-                                (x > 1 && x < this.cols - 2 && y > 1 && y < this.rows - 2) &&
-                                !(x >= 6 && x <= 8 && y >= 5 && y <= 7)
-                            ) {
-                                if (Math.random() > (0.4 - this.level * 0.05)) {
-                                    maze[y][x] = 1; // pellet
-                                } else {
-                                    maze[y][x] = 0; // wall
-                                }
+                        // Level 2 - L-shaped corridors
+                        else if (this.level === 2) {
+                            if ((x >= 2 && x <= 4 && y >= 2 && y <= 8) ||
+                                (x >= 2 && x <= 8 && y >= 6 && y <= 8) ||
+                                (x >= 10 && x <= 12 && y >= 2 && y <= 6) ||
+                                (x >= 6 && x <= 12 && y >= 4 && y <= 6) ||
+                                (x >= 3 && x <= 5 && y >= 10 && y <= 12) ||
+                                (x >= 9 && x <= 11 && y >= 9 && y <= 12)) {
+                                maze[y][x] = 0;
                             }
-                            // Ghost house
-                            else if (x >= 6 && x <= 8 && y >= 5 && y <= 7) {
+                            else if (x >= 6 && x <= 8 && y >= 6 && y <= 8) {
                                 maze[y][x] = 3; // ghost house
                             }
-                            // Power pellets in corners
-                            else if ((x === 2 && y === 2) || (x === 12 && y === 2) || 
-                                    (x === 2 && y === 12) || (x === 12 && y === 12)) {
-                                maze[y][x] = 2; // power pellet
+                            else if ((x === 1 && y === 1) || (x === 13 && y === 1) || 
+                                    (x === 1 && y === 13) || (x === 13 && y === 13)) {
+                                maze[y][x] = 2; // power pellets
                             }
                             else {
-                                maze[y][x] = 1; // regular pellet
+                                maze[y][x] = 1;
+                            }
+                        }
+                        // Level 3 - Spiral design
+                        else if (this.level === 3) {
+                            if ((x >= 2 && x <= 11 && y === 2) ||
+                                (x === 11 && y >= 2 && y <= 11) ||
+                                (x >= 4 && x <= 11 && y === 11) ||
+                                (x === 4 && y >= 4 && y <= 11) ||
+                                (x >= 4 && x <= 9 && y === 4) ||
+                                (x === 9 && y >= 4 && y <= 9) ||
+                                (x >= 6 && x <= 9 && y === 9)) {
+                                maze[y][x] = 0;
+                            }
+                            else if (x >= 6 && x <= 8 && y >= 6 && y <= 8) {
+                                maze[y][x] = 3; // ghost house
+                            }
+                            else if ((x === 1 && y === 1) || (x === 12 && y === 3) || 
+                                    (x === 3 && y === 12) || (x === 13 && y === 13)) {
+                                maze[y][x] = 2; // power pellets
+                            }
+                            else {
+                                maze[y][x] = 1;
+                            }
+                        }
+                        // Level 4+ - Random asymmetrical layouts
+                        else {
+                            // Ghost house always in center
+                            if (x >= 6 && x <= 8 && y >= 6 && y <= 8) {
+                                maze[y][x] = 3;
+                            }
+                            // Power pellets in corners (always guaranteed)
+                            else if ((x === 1 && y === 1) || (x === 13 && y === 1) || 
+                                    (x === 1 && y === 13) || (x === 13 && y === 13)) {
+                                maze[y][x] = 2;
+                            }
+                            // Random asymmetrical walls
+                            else if (x > 1 && x < this.cols - 2 && y > 1 && y < this.rows - 2) {
+                                // Create interesting patterns based on level
+                                const pattern = (x + y + this.level) % 7;
+                                const density = Math.min(0.3 + this.level * 0.05, 0.6);
+                                
+                                if (pattern === 0 && Math.random() < density) {
+                                    maze[y][x] = 0; // wall
+                                } else if ((x + y * this.level) % 11 === 0 && Math.random() < 0.4) {
+                                    maze[y][x] = 0; // wall
+                                } else {
+                                    maze[y][x] = 1; // pellet
+                                }
+                            }
+                            else {
+                                maze[y][x] = 1;
                             }
                         }
                     }
                 }
                 
-                // Clear player starting position
-                maze[11][7] = 4; // empty space
-                
+                maze[11][7] = 4; // Clear player start
                 return maze;
             }
             
@@ -295,6 +379,8 @@
             startGame() {
                 this.gameRunning = true;
                 this.gameLoop();
+                this.startPlayerLoop();
+                this.startGhostLoop();
             }
             
             gameLoop() {
@@ -303,7 +389,30 @@
                 this.update();
                 this.draw();
                 
-                setTimeout(() => this.gameLoop(), this.level === 1 ? 200 : 150); // Slower on level 1
+                // Single game loop with normal speed
+                setTimeout(() => this.gameLoop(), this.level === 1 ? 200 : 150);
+            }
+            
+            startPlayerLoop() {
+                if (!this.gameRunning) return;
+                
+                const playerSpeed = this.level === 1 ? 200 : 150; // Normal speed always
+                
+                this.updatePlayer();
+                this.checkCollisions();
+                this.checkWinCondition();
+                
+                setTimeout(() => this.startPlayerLoop(), playerSpeed);
+            }
+            
+            startGhostLoop() {
+                if (!this.gameRunning) return;
+                
+                const ghostSpeed = this.powerMode ? 460 : (this.level === 1 ? 230 : 173); // Much slower when scared
+                
+                this.updateGhosts();
+                
+                setTimeout(() => this.startGhostLoop(), ghostSpeed);
             }
             
             update() {
@@ -313,15 +422,9 @@
                         this.powerMode = false;
                     }
                 }
-                
-                this.updatePlayer();
-                this.updateGhosts();
-                this.checkCollisions();
-                this.checkWinCondition();
             }
             
             updatePlayer() {
-                // Only move if player has chosen a direction
                 if (this.player.nextDirection === -1) return;
                 
                 const nextX = this.player.x + this.directions[this.player.nextDirection].x;
@@ -331,7 +434,6 @@
                     this.player.direction = this.player.nextDirection;
                 }
                 
-                // Only move if we have a valid direction
                 if (this.player.direction === -1) return;
                 
                 const newX = this.player.x + this.directions[this.player.direction].x;
@@ -341,11 +443,9 @@
                     this.player.x = newX;
                     this.player.y = newY;
                     
-                    // Handle tunnel effect
                     if (this.player.x < 0) this.player.x = this.cols - 1;
                     if (this.player.x >= this.cols) this.player.x = 0;
                     
-                    // Collect pellets
                     if (this.maze[this.player.y][this.player.x] === 1) {
                         this.maze[this.player.y][this.player.x] = 4;
                         this.score += 10;
@@ -358,7 +458,6 @@
                         this.powerModeTimer = 50;
                     }
                 } else {
-                    // Stop moving if we hit a wall
                     this.player.direction = -1;
                 }
             }
@@ -381,9 +480,7 @@
                     } else if (possibleDirections.length === 1) {
                         ghost.direction = possibleDirections[0];
                     } else {
-                        // AI behavior - chase or flee based on power mode
                         if (this.powerMode) {
-                            // Flee from player
                             const playerDist = possibleDirections.map(dir => {
                                 const newX = ghost.x + this.directions[dir].x;
                                 const newY = ghost.y + this.directions[dir].y;
@@ -391,7 +488,6 @@
                             });
                             ghost.direction = possibleDirections[playerDist.indexOf(Math.max(...playerDist))];
                         } else {
-                            // Chase player or random movement
                             if (Math.random() > 0.7) {
                                 const playerDist = possibleDirections.map(dir => {
                                     const newX = ghost.x + this.directions[dir].x;
@@ -412,7 +508,6 @@
                         ghost.x = newX;
                         ghost.y = newY;
                         
-                        // Handle tunnel effect
                         if (ghost.x < 0) ghost.x = this.cols - 1;
                         if (ghost.x >= this.cols) ghost.x = 0;
                     }
@@ -421,14 +516,14 @@
             
             canMove(x, y) {
                 if (x < 0 || x >= this.cols || y < 0 || y >= this.rows) {
-                    return x < 0 || x >= this.cols; // Allow horizontal tunneling
+                    return x < 0 || x >= this.cols;
                 }
                 return this.maze[y][x] !== 0;
             }
             
             canMoveGhost(x, y) {
                 if (x < 0 || x >= this.cols || y < 0 || y >= this.rows) {
-                    return x < 0 || x >= this.cols; // Allow horizontal tunneling
+                    return x < 0 || x >= this.cols;
                 }
                 return this.maze[y][x] !== 0;
             }
@@ -437,21 +532,17 @@
                 this.ghosts.forEach((ghost, index) => {
                     if (ghost.x === this.player.x && ghost.y === this.player.y) {
                         if (this.powerMode) {
-                            // Eat ghost
                             this.score += 200;
                             this.scoreElement.textContent = this.score;
-                            // Respawn ghost at center
-                            ghost.x = 14;
-                            ghost.y = 11;
+                            ghost.x = 7;
+                            ghost.y = 6;
                         } else {
-                            // Player dies
                             this.lives--;
                             this.livesElement.textContent = this.lives;
                             
                             if (this.lives <= 0) {
                                 this.gameOver();
                             } else {
-                                // Reset positions
                                 this.player.x = 7;
                                 this.player.y = 11;
                                 this.player.direction = -1;
@@ -481,9 +572,15 @@
                 if (pelletsRemaining === 0) {
                     this.level++;
                     this.levelElement.textContent = this.level;
+                    
+                    // Add extra life (max 5 lives)
+                    if (this.lives < 5) {
+                        this.lives++;
+                        this.livesElement.textContent = this.lives;
+                    }
+                    
                     this.maze = this.createMaze();
                     
-                    // Reset positions
                     this.player.x = 7;
                     this.player.y = 11;
                     this.player.direction = -1;
@@ -501,14 +598,13 @@
                 this.ctx.fillStyle = '#000';
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                 
-                // Draw maze
                 for (let y = 0; y < this.rows; y++) {
                     for (let x = 0; x < this.cols; x++) {
                         const cellX = x * this.gridSize;
                         const cellY = y * this.gridSize;
                         
                         switch (this.maze[y][x]) {
-                            case 0: // Wall - mystical colorful walls
+                            case 0:
                                 const wallGradient = this.ctx.createLinearGradient(cellX, cellY, cellX + this.gridSize, cellY + this.gridSize);
                                 wallGradient.addColorStop(0, '#9370DB');
                                 wallGradient.addColorStop(0.5, '#4169E1');
@@ -516,18 +612,17 @@
                                 this.ctx.fillStyle = wallGradient;
                                 this.ctx.fillRect(cellX, cellY, this.gridSize, this.gridSize);
                                 
-                                // Add sparkly border
                                 this.ctx.strokeStyle = '#FFD700';
                                 this.ctx.lineWidth = 1;
                                 this.ctx.strokeRect(cellX, cellY, this.gridSize, this.gridSize);
                                 break;
-                            case 1: // Blue token pellet
+                            case 1:
                                 this.drawBlueToken(cellX + this.gridSize/2, cellY + this.gridSize/2, 3);
                                 break;
-                            case 2: // Rainbow swirl power pellet
+                            case 2:
                                 this.drawRainbowSwirl(cellX + this.gridSize/2, cellY + this.gridSize/2, this.gridSize/2 - 2);
                                 break;
-                            case 3: // Ghost house
+                            case 3:
                                 this.ctx.fillStyle = '#333';
                                 this.ctx.fillRect(cellX, cellY, this.gridSize, this.gridSize);
                                 break;
@@ -535,59 +630,29 @@
                     }
                 }
                 
-                // Draw player (cosmic unicorn)
                 const playerX = this.player.x * this.gridSize + this.gridSize/2;
                 const playerY = this.player.y * this.gridSize + this.gridSize/2;
                 
                 this.drawCosmicUnicorn(playerX, playerY, this.gridSize/2 - 1);
                 
-                // Draw ghosts
                 this.ghosts.forEach(ghost => {
                     const ghostX = ghost.x * this.gridSize + this.gridSize/2;
                     const ghostY = ghost.y * this.gridSize + this.gridSize/2;
                     
-                    if (this.powerMode) {
-                        this.ctx.fillStyle = this.powerModeTimer % 10 < 5 ? '#0000ff' : '#ffffff';
-                    } else {
-                        this.ctx.fillStyle = ghost.color;
-                    }
-                    
-                    // Ghost body
-                    this.ctx.beginPath();
-                    this.ctx.arc(ghostX, ghostY - 2, this.gridSize/2 - 2, Math.PI, 0);
-                    this.ctx.rect(ghostX - this.gridSize/2 + 2, ghostY - 2, this.gridSize - 4, this.gridSize/2);
-                    this.ctx.fill();
-                    
-                    // Ghost bottom (wavy)
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(ghostX - this.gridSize/2 + 2, ghostY + this.gridSize/2 - 2);
-                    for (let i = 0; i < 4; i++) {
-                        const waveX = ghostX - this.gridSize/2 + 2 + (i * (this.gridSize - 4) / 3);
-                        const waveY = ghostY + this.gridSize/2 - 2 - (i % 2 === 0 ? 3 : 0);
-                        this.ctx.lineTo(waveX, waveY);
-                    }
-                    this.ctx.lineTo(ghostX + this.gridSize/2 - 2, ghostY + this.gridSize/2 - 2);
-                    this.ctx.lineTo(ghostX + this.gridSize/2 - 2, ghostY - 2);
-                    this.ctx.fill();
-                    
-                    // Eyes
-                    if (!this.powerMode || this.powerModeTimer % 10 >= 5) {
-                        this.ctx.fillStyle = '#fff';
-                        this.ctx.fillRect(ghostX - 6, ghostY - 6, 4, 6);
-                        this.ctx.fillRect(ghostX + 2, ghostY - 6, 4, 6);
-                        
-                        this.ctx.fillStyle = '#000';
-                        this.ctx.fillRect(ghostX - 5, ghostY - 4, 2, 2);
-                        this.ctx.fillRect(ghostX + 3, ghostY - 4, 2, 2);
-                    }
+                    this.drawPurplePixie(ghostX, ghostY, this.gridSize/2 - 1, ghost);
                 });
             }
             
             drawCosmicUnicorn(x, y, radius) {
                 const ctx = this.ctx;
                 
-                // Main Pac-Man body (golden yellow)
-                ctx.fillStyle = '#FFD700';
+                // Main body gradient exactly like your image
+                const bodyGradient = ctx.createLinearGradient(x, y - radius, x, y + radius);
+                bodyGradient.addColorStop(0, '#FFD700'); // Bright gold top
+                bodyGradient.addColorStop(0.6, '#FFC107'); // Medium gold
+                bodyGradient.addColorStop(1, '#FF8F00'); // Darker orange bottom
+                
+                ctx.fillStyle = bodyGradient;
                 ctx.strokeStyle = '#000';
                 ctx.lineWidth = 4;
                 ctx.beginPath();
@@ -595,172 +660,307 @@
                 ctx.fill();
                 ctx.stroke();
                 
-                // Pac-Man mouth (direction-based) - only show if moving
+                // Pac-Man mouth (triangular like your image)
                 if (this.player.direction !== -1) {
                     ctx.fillStyle = '#000';
                     ctx.beginPath();
                     const mouthAngle = this.player.direction * Math.PI/2;
-                    const mouthSize = 0.8; // How wide the mouth opens
-                    ctx.arc(x, y, radius, mouthAngle - mouthSize, mouthAngle + mouthSize);
-                    ctx.lineTo(x, y);
+                    ctx.moveTo(x, y);
+                    ctx.arc(x, y, radius, mouthAngle - 0.6, mouthAngle + 0.6);
+                    ctx.closePath();
                     ctx.fill();
                 }
                 
-                // Small unicorn horn at top
+                // Three unicorn horns exactly like your image
                 ctx.fillStyle = '#FFFACD';
                 ctx.strokeStyle = '#000';
                 ctx.lineWidth = 2;
+                
+                // Left small horn
                 ctx.beginPath();
-                ctx.moveTo(x, y - radius - 2);
-                ctx.lineTo(x - 4, y - radius - 10);
-                ctx.lineTo(x + 4, y - radius - 10);
+                ctx.moveTo(x - radius * 0.3, y - radius * 0.75);
+                ctx.lineTo(x - radius * 0.35, y - radius * 0.95);
+                ctx.lineTo(x - radius * 0.25, y - radius * 0.95);
                 ctx.closePath();
                 ctx.fill();
                 ctx.stroke();
                 
-                // Horn spiral
-                ctx.strokeStyle = '#FFB6C1';
-                ctx.lineWidth = 1.5;
-                for (let i = 0; i < 3; i++) {
-                    const hornY = y - radius - 3 - (i * 2);
-                    ctx.beginPath();
-                    ctx.moveTo(x - 3, hornY);
-                    ctx.lineTo(x + 3, hornY);
-                    ctx.stroke();
-                }
+                // Center main horn (tallest)
+                ctx.beginPath();
+                ctx.moveTo(x - radius * 0.05, y - radius * 0.8);
+                ctx.lineTo(x, y - radius * 1.05);
+                ctx.lineTo(x + radius * 0.05, y - radius * 0.8);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
                 
-                // Small ears like your image
+                // Right large horn (bigger than left)
+                ctx.beginPath();
+                ctx.moveTo(x + radius * 0.25, y - radius * 0.75);
+                ctx.lineTo(x + radius * 0.35, y - radius * 1.0);
+                ctx.lineTo(x + radius * 0.4, y - radius * 0.95);
+                ctx.lineTo(x + radius * 0.3, y - radius * 0.75);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                
+                // Left ear exactly like your image
                 ctx.fillStyle = '#FFD700';
                 ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.ellipse(x - radius * 0.7, y - radius * 0.4, radius * 0.2, radius * 0.35, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Left ear inner curve detail
+                ctx.strokeStyle = '#000';
                 ctx.lineWidth = 2;
-                
-                // Left small ear
                 ctx.beginPath();
-                ctx.ellipse(x - radius * 0.6, y - radius * 0.7, 3, 5, -0.3, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.arc(x - radius * 0.7, y - radius * 0.4, radius * 0.1, 0.5, Math.PI + 0.5);
                 ctx.stroke();
                 
-                // Right larger ear
-                ctx.beginPath();
-                ctx.ellipse(x + radius * 0.5, y - radius * 0.8, 4, 7, 0.2, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-                
-                // Inner ears (pink)
-                ctx.fillStyle = '#FFB6C1';
-                ctx.beginPath();
-                ctx.ellipse(x - radius * 0.6, y - radius * 0.7, 1.5, 2.5, -0.3, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.beginPath();
-                ctx.ellipse(x + radius * 0.5, y - radius * 0.8, 2, 3.5, 0.2, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Round glasses frames (larger, like your image)
+                // Round glasses frames exactly like your image
                 ctx.strokeStyle = '#FFF';
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 4;
                 
                 // Left lens frame
                 ctx.beginPath();
-                ctx.arc(x - radius * 0.35, y - radius * 0.15, 8, 0, Math.PI * 2);
+                ctx.arc(x - radius * 0.32, y - radius * 0.08, radius * 0.3, 0, Math.PI * 2);
                 ctx.stroke();
                 
                 // Right lens frame
                 ctx.beginPath();
-                ctx.arc(x + radius * 0.35, y - radius * 0.15, 8, 0, Math.PI * 2);
+                ctx.arc(x + radius * 0.32, y - radius * 0.08, radius * 0.3, 0, Math.PI * 2);
                 ctx.stroke();
                 
-                // Left lens (blue with swirl like your image)
+                // Left lens (blue with wavy pattern like your image)
                 const blueGradient = ctx.createRadialGradient(
-                    x - radius * 0.35, y - radius * 0.15, 0,
-                    x - radius * 0.35, y - radius * 0.15, 7
+                    x - radius * 0.32, y - radius * 0.08, 0,
+                    x - radius * 0.32, y - radius * 0.08, radius * 0.27
                 );
                 blueGradient.addColorStop(0, '#87CEEB');
-                blueGradient.addColorStop(0.7, '#2196F3');
-                blueGradient.addColorStop(1, '#1565C0');
+                blueGradient.addColorStop(0.6, '#2196F3');
+                blueGradient.addColorStop(1, '#0D47A1');
                 
                 ctx.fillStyle = blueGradient;
                 ctx.beginPath();
-                ctx.arc(x - radius * 0.35, y - radius * 0.15, 7, 0, Math.PI * 2);
+                ctx.arc(x - radius * 0.32, y - radius * 0.08, radius * 0.27, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Blue lens swirl effect
+                // Blue lens wavy swirl pattern
                 ctx.strokeStyle = '#B3E5FC';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 2.5;
                 ctx.beginPath();
-                ctx.arc(x - radius * 0.35, y - radius * 0.15, 4, 0.5, Math.PI + 0.5);
+                ctx.arc(x - radius * 0.32, y - radius * 0.08, radius * 0.18, 0.3, Math.PI + 0.8);
                 ctx.stroke();
+                
+                // Blue lens highlight
+                ctx.fillStyle = '#E1F5FE';
+                ctx.beginPath();
+                ctx.arc(x - radius * 0.42, y - radius * 0.18, radius * 0.08, 0, Math.PI * 2);
+                ctx.fill();
                 
                 // Right lens (red with highlight like your image)
                 const redGradient = ctx.createRadialGradient(
-                    x + radius * 0.35, y - radius * 0.15, 0,
-                    x + radius * 0.35, y - radius * 0.15, 7
+                    x + radius * 0.32, y - radius * 0.08, 0,
+                    x + radius * 0.32, y - radius * 0.08, radius * 0.27
                 );
                 redGradient.addColorStop(0, '#FF7043');
-                redGradient.addColorStop(0.7, '#F44336');
-                redGradient.addColorStop(1, '#C62828');
+                redGradient.addColorStop(0.6, '#F44336');
+                redGradient.addColorStop(1, '#B71C1C');
                 
                 ctx.fillStyle = redGradient;
                 ctx.beginPath();
-                ctx.arc(x + radius * 0.35, y - radius * 0.15, 7, 0, Math.PI * 2);
+                ctx.arc(x + radius * 0.32, y - radius * 0.08, radius * 0.27, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Red lens highlight
-                ctx.fillStyle = '#FFAB91';
+                // Red lens prominent highlight like your image
+                ctx.fillStyle = '#FFCDD2';
                 ctx.beginPath();
-                ctx.arc(x + radius * 0.25, y - radius * 0.25, 2.5, 0, Math.PI * 2);
+                ctx.arc(x + radius * 0.22, y - radius * 0.18, radius * 0.12, 0, Math.PI * 2);
                 ctx.fill();
                 
                 // Glasses bridge
                 ctx.strokeStyle = '#FFF';
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 4;
                 ctx.beginPath();
-                ctx.moveTo(x - radius * 0.15, y - radius * 0.15);
-                ctx.lineTo(x + radius * 0.15, y - radius * 0.15);
+                ctx.moveTo(x - radius * 0.08, y - radius * 0.08);
+                ctx.lineTo(x + radius * 0.08, y - radius * 0.08);
                 ctx.stroke();
                 
                 // Small earring on left ear
-                ctx.fillStyle = '#C0C0C0';
+                ctx.fillStyle = '#757575';
                 ctx.strokeStyle = '#000';
-                ctx.lineWidth = 1;
+                ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                ctx.arc(x - radius * 0.8, y - radius * 0.6, 2, 0, Math.PI * 2);
+                ctx.arc(x - radius * 0.85, y - radius * 0.35, radius * 0.06, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
                 
-                // Head highlight (like your image)
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                // Inner earring hole
+                ctx.fillStyle = '#424242';
                 ctx.beginPath();
-                ctx.ellipse(x + radius * 0.3, y - radius * 0.6, 4, 3, 0.3, 0, Math.PI * 2);
+                ctx.arc(x - radius * 0.85, y - radius * 0.35, radius * 0.03, 0, Math.PI * 2);
                 ctx.fill();
+                
+                // Head highlight exactly like your image
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.beginPath();
+                ctx.ellipse(x + radius * 0.25, y - radius * 0.45, radius * 0.1, radius * 0.06, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            drawPurplePixie(x, y, radius, ghost) {
+                const ctx = this.ctx;
+                
+                // Purple cube-shaped head like MYST character
+                let bodyColor = '#9C27B0'; // Purple
+                if (this.powerMode) {
+                    bodyColor = this.powerModeTimer % 10 < 5 ? '#FF69B4' : '#FFB6C1'; // Flashing hot pink/light pink when scared
+                }
+                
+                const bodyGradient = ctx.createLinearGradient(x, y - radius, x, y + radius);
+                bodyGradient.addColorStop(0, bodyColor);
+                bodyGradient.addColorStop(0.5, this.powerMode ? '#FF1493' : '#7B1FA2');
+                bodyGradient.addColorStop(1, this.powerMode ? '#C2185B' : '#4A148C');
+                
+                ctx.fillStyle = bodyGradient;
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Cool sunglasses like MYST character
+                ctx.fillStyle = '#000';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                
+                // Left lens (dark)
+                ctx.beginPath();
+                ctx.arc(x - radius * 0.3, y - radius * 0.15, radius * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Right lens (dark)
+                ctx.beginPath();
+                ctx.arc(x + radius * 0.3, y - radius * 0.15, radius * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Sunglasses bridge
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(x - radius * 0.1, y - radius * 0.15);
+                ctx.lineTo(x + radius * 0.1, y - radius * 0.15);
+                ctx.stroke();
+                
+                // Purple/pink tinted reflections on sunglasses
+                if (!this.powerMode || this.powerModeTimer % 10 >= 5) {
+                    ctx.fillStyle = this.powerMode ? 'rgba(255, 105, 180, 0.3)' : 'rgba(156, 39, 176, 0.3)';
+                    
+                    // Left lens tint
+                    ctx.beginPath();
+                    ctx.arc(x - radius * 0.3, y - radius * 0.15, radius * 0.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Right lens tint
+                    ctx.beginPath();
+                    ctx.arc(x + radius * 0.3, y - radius * 0.15, radius * 0.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Small white highlights on lenses
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                    ctx.beginPath();
+                    ctx.arc(x - radius * 0.35, y - radius * 0.2, radius * 0.08, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.arc(x + radius * 0.25, y - radius * 0.2, radius * 0.08, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Small neutral mouth
+                if (this.powerMode) {
+                    // Scared expression - worried mouth
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(x, y + radius * 0.35, radius * 0.12, 0.2, Math.PI - 0.2);
+                    ctx.stroke();
+                } else {
+                    // Cool neutral expression - small line mouth
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x - radius * 0.1, y + radius * 0.35);
+                    ctx.lineTo(x + radius * 0.1, y + radius * 0.35);
+                    ctx.stroke();
+                }
+                
+                // Small geometric details like MYST character
+                if (!this.powerMode) {
+                    // Small accent lines on the sides
+                    ctx.strokeStyle = this.powerMode ? '#C2185B' : '#4A148C';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(x - radius * 0.8, y - radius * 0.2);
+                    ctx.lineTo(x - radius * 0.8, y + radius * 0.2);
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x + radius * 0.8, y - radius * 0.2);
+                    ctx.lineTo(x + radius * 0.8, y + radius * 0.2);
+                    ctx.stroke();
+                }
             }
             
             drawBlueToken(x, y, radius) {
                 const ctx = this.ctx;
                 
-                // Create mystical blue gradient
-                const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-                gradient.addColorStop(0, '#00BFFF');
-                gradient.addColorStop(0.5, '#4169E1');
-                gradient.addColorStop(1, '#191970');
+                // Force minimum 15px radius
+                const actualRadius = Math.max(radius, 15);
+                
+                // Main blue circle with 3D gradient like your logo
+                const gradient = ctx.createRadialGradient(x - actualRadius * 0.3, y - actualRadius * 0.3, 0, x, y, actualRadius);
+                gradient.addColorStop(0, '#64B5F6'); // Lighter blue highlight
+                gradient.addColorStop(0.3, '#2196F3'); // Medium blue
+                gradient.addColorStop(0.7, '#1976D2'); // Darker blue
+                gradient.addColorStop(1, '#0D47A1'); // Deep blue edge
                 
                 ctx.fillStyle = gradient;
                 ctx.beginPath();
-                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.arc(x, y, actualRadius, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Add mystical glow effect
-                ctx.shadowColor = '#00BFFF';
-                ctx.shadowBlur = 8;
+                // Add subtle shadow/outline
+                ctx.strokeStyle = 'rgba(13, 71, 161, 0.3)';
+                ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.arc(x, y, radius, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.shadowBlur = 0;
+                ctx.arc(x, y, actualRadius, 0, Math.PI * 2);
+                ctx.stroke();
                 
-                // Add sparkle
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                // Inner white circle (like the hole in your logo)
+                ctx.fillStyle = '#FFFFFF';
                 ctx.beginPath();
-                ctx.arc(x - 1, y - 1, 1, 0, Math.PI * 2);
+                ctx.arc(x, y, actualRadius * 0.35, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Horizontal blue bar across the center (like your logo)
+                ctx.fillStyle = '#1976D2';
+                ctx.fillRect(x - actualRadius * 0.6, y - actualRadius * 0.12, actualRadius * 1.2, actualRadius * 0.24);
+                
+                // Add highlight on the horizontal bar
+                ctx.fillStyle = '#42A5F5';
+                ctx.fillRect(x - actualRadius * 0.6, y - actualRadius * 0.12, actualRadius * 1.2, actualRadius * 0.08);
+                
+                // Add subtle highlight on top of main circle
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.beginPath();
+                ctx.arc(x - actualRadius * 0.25, y - actualRadius * 0.25, actualRadius * 0.3, 0, Math.PI * 2);
                 ctx.fill();
             }
             
@@ -768,14 +968,12 @@
                 const ctx = this.ctx;
                 const time = Date.now() * 0.01;
                 
-                // Draw rotating rainbow swirl - same size as character
                 ctx.save();
                 ctx.translate(x, y);
-                ctx.rotate(time * 0.15); // Slightly faster rotation for visibility
+                ctx.rotate(time * 0.15);
                 
                 const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
                 
-                // Black outline like the character
                 ctx.strokeStyle = '#000';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
@@ -794,19 +992,16 @@
                     ctx.closePath();
                     ctx.fill();
                     
-                    // Add subtle stroke between segments
                     ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
                     ctx.lineWidth = 1;
                     ctx.stroke();
                 }
                 
-                // Center highlight circle
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
                 ctx.beginPath();
                 ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Center outline
                 ctx.strokeStyle = '#000';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -815,7 +1010,6 @@
                 
                 ctx.restore();
                 
-                // Add sparkle effects around the swirl
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
                 const sparkleTime = time * 2;
                 const sparklePositions = [
@@ -836,7 +1030,39 @@
             gameOver() {
                 this.gameRunning = false;
                 document.getElementById('finalScore').textContent = this.score;
+                document.getElementById('finalLevel').textContent = this.level;
                 document.getElementById('gameOver').style.display = 'block';
+                this.loadLeaderboard();
+            }
+            
+            loadLeaderboard() {
+                const leaderboardList = document.getElementById('leaderboardList');
+                
+                this.leaderboard.sort((a, b) => b.score - a.score);
+                const top10 = this.leaderboard.slice(0, 10);
+                
+                leaderboardList.innerHTML = top10.map((entry, index) => 
+                    `<div class="leaderboard-entry">
+                        ${index + 1}. ${entry.name} - ${entry.score} (Level ${entry.level})
+                    </div>`
+                ).join('');
+            }
+            
+            saveScore(name, score, level) {
+                this.leaderboard.push({ name, score, level });
+                
+                // Keep only top 20 scores
+                this.leaderboard.sort((a, b) => b.score - a.score);
+                this.leaderboard = this.leaderboard.slice(0, 20);
+                
+                this.loadLeaderboard();
+            }
+        }
+        
+        function saveScore() {
+            const name = document.getElementById('playerName').value.trim() || 'Anonymous';
+            if (game && game.score > 0) {
+                game.saveScore(name, game.score, game.level);
             }
         }
         
@@ -851,7 +1077,6 @@
             startGame();
         }
         
-        // Start the game when page loads
         window.addEventListener('load', startGame);
     </script>
 </body>
