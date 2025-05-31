@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PACMYST - Welcome</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated starfield background */
+        .starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+                        radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+                        radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+                        radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.6), transparent),
+                        radial-gradient(2px 2px at 160px 30px, #ddd, transparent);
+            background-repeat: repeat;
+            background-size: 200px 100px;
+            animation: stars 20s linear infinite;
+        }
+
+        @keyframes stars {
+            from { transform: translateY(0px); }
+            to { transform: translateY(-100px); }
+        }
+
+        .welcome-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .arcade-border {
+            border: 8px solid #00FFFF;
+            border-radius: 20px;
+            padding: 60px 40px;
+            background: linear-gradient(135deg, 
+                rgba(255, 20, 147, 0.9), 
+                rgba(255, 99, 71, 0.9), 
+                rgba(255, 215, 0, 0.9), 
+                rgba(50, 205, 50, 0.9), 
+                rgba(0, 191, 255, 0.9), 
+                rgba(147, 112, 219, 0.9));
+            box-shadow: 
+                0 0 20px #00FFFF,
+                inset 0 0 20px rgba(0, 255, 255, 0.2),
+                0 0 40px rgba(0, 191, 255, 0.4);
+            animation: glow 2s ease-in-out infinite alternate;
+            max-width: 800px;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 20px #00FFFF, inset 0 0 20px rgba(0, 255, 255, 0.2), 0 0 40px rgba(0, 191, 255, 0.4); }
+            to { box-shadow: 0 0 30px #FF1493, inset 0 0 30px rgba(255, 20, 147, 0.3), 0 0 60px rgba(255, 20, 147, 0.5); }
+        }
+
+        .game-logo {
+            font-size: 5em;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-weight: 900;
+            background: linear-gradient(45deg, #FF1493, #FF6347, #FFD700, #32CD32, #00BFFF, #9370DB);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 4px 4px 0px #000, 8px 8px 0px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .subtitle {
+            font-size: 1.4em;
+            color: #00FFFF;
+            text-shadow: 2px 2px 0px #000;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .description {
+            font-size: 1.1em;
+            color: #FFFFFF;
+            text-shadow: 1px 1px 0px #000;
+            margin-bottom: 40px;
+            line-height: 1.6;
+            max-width: 600px;
+        }
+
+        .play-button {
+            background: linear-gradient(45deg, #FF1493 0%, #FF6347 25%, #FFD700 50%, #32CD32 75%, #00BFFF 100%);
+            color: #000;
+            border: 6px solid #000;
+            padding: 25px 60px;
+            font-size: 2.5em;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-weight: 900;
+            cursor: pointer;
+            border-radius: 20px;
+            box-shadow: 
+                0 8px 0px #000,
+                0 12px 20px rgba(0,0,0,0.4);
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .play-button::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s linear infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .play-button:hover {
+            background: linear-gradient(45deg, #FF6347 0%, #FFD700 25%, #32CD32 50%, #00BFFF 75%, #9370DB 100%);
+            transform: translateY(-4px);
+            box-shadow: 
+                0 12px 0px #000,
+                0 16px 25px rgba(0,0,0,0.5);
+        }
+
+        .play-button:active {
+            transform: translateY(4px);
+            box-shadow: 
+                0 4px 0px #000,
+                0 6px 15px rgba(0,0,0,0.3);
+        }
+
+        .controls-info {
+            margin-top: 40px;
+            font-size: 1em;
+            color: #00FF00;
+            text-shadow: 1px 1px 0px #000;
+            border: 2px solid #00FF00;
+            padding: 15px 25px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .controls-info p {
+            margin: 5px 0;
+        }
+
+        .version-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.9em;
+            color: #888;
+            text-shadow: 1px 1px 0px #000;
+        }
+
+        @media (max-width: 768px) {
+            .game-logo {
+                font-size: 3em;
+                letter-spacing: 3px;
+            }
+            
+            .play-button {
+                font-size: 2em;
+                padding: 20px 40px;
+                letter-spacing: 2px;
+            }
+            
+            .arcade-border {
+                padding: 40px 20px;
+                margin: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="starfield"></div>
+    
+    <div class="welcome-container">
+        <div class="arcade-border">
+            <h1 class="game-logo">PACMYST</h1>
+            <h2 class="subtitle">MYSTICAL ARCADE ADVENTURE</h2>
+            <p class="description">
+                Navigate the cosmic maze as PacMyst! Collect basedness and avoid the ghosts. 
+                Use Whirl power-ups, and chase them down!! Good Luck and Stay based
+            </p>
+            
+            <button class="play-button" onclick="launchGame()">
+                <span>PLAY GAME</span>
+            </button>
+            
+            <div class="controls-info">
+                <p><strong>CONTROLS:</strong> Arrow Keys or WASD</p>
+                <p><strong>GOAL:</strong> Collect all tokens to advance!</p>
+                <p><strong>POWER-UPS:</strong> Turn ghosts pink and chase them!</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="version-info">
+        PACMYST v1.0 | OK Computer Terminal Ready
+    </div>
+
+    <script>
+        function launchGame() {
+            // Add button press effect
+            const button = document.querySelector('.play-button');
+            button.style.transform = 'translateY(4px)';
+            button.style.boxShadow = '0 4px 0px #000, 0 6px 15px rgba(0,0,0,0.3)';
+            
+            // Launch the game after brief delay for effect
+            setTimeout(() => {
+                // In your OK Computer Terminal, this would navigate to game.html
+                // For now, we'll redirect to a game page or show message
+                
+                // Option 1: For OK Computer Terminal - redirect to separate game file
+                // window.location.href = 'pacmyst-game.html';
+                
+                // Option 2: For testing - show message
+                alert('🎮 For OK Computer Terminal: This would load pacmyst-game.html\n\nYou need to create a separate game.html file with the full game code.');
+                
+                // Reset button
+                button.style.transform = '';
+                button.style.boxShadow = '0 8px 0px #000, 0 12px 20px rgba(0,0,0,0.4)';
+            }, 300);
+        }
+    </script>
+</body>
+</html>
