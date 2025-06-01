@@ -14,7 +14,7 @@
         body {
             background: #000;
             color: #fff;
-            font-family: 'Courier New', monospace;
+            font-family: 'Arial', 'Helvetica', sans-serif;
             overflow: hidden;
             position: relative;
         }
@@ -70,6 +70,7 @@
                 0 0 40px rgba(0, 191, 255, 0.4);
             animation: glow 2s ease-in-out infinite alternate;
             max-width: 800px;
+            width: 100%;
         }
 
         @keyframes glow {
@@ -78,8 +79,8 @@
         }
 
         .game-logo {
-            font-size: 5em;
-            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-size: 4em;
+            font-family: 'Arial Black', 'Arial', sans-serif;
             font-weight: 900;
             background: linear-gradient(45deg, #FF1493, #FF6347, #FFD700, #32CD32, #00BFFF, #9370DB);
             -webkit-background-clip: text;
@@ -87,14 +88,14 @@
             background-clip: text;
             text-shadow: 4px 4px 0px #000, 8px 8px 0px rgba(0,0,0,0.3);
             margin-bottom: 30px;
-            letter-spacing: 6px;
+            letter-spacing: 4px;
             text-transform: uppercase;
             animation: pulse 3s ease-in-out infinite;
         }
 
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { transform: scale(1.05); }
         }
 
         .subtitle {
@@ -103,6 +104,7 @@
             text-shadow: 2px 2px 0px #000;
             margin-bottom: 20px;
             letter-spacing: 2px;
+            font-weight: bold;
         }
 
         .description {
@@ -112,6 +114,7 @@
             margin-bottom: 40px;
             line-height: 1.6;
             max-width: 600px;
+            font-weight: 500;
         }
 
         .play-button {
@@ -119,8 +122,8 @@
             color: #000;
             border: 6px solid #000;
             padding: 25px 60px;
-            font-size: 2.5em;
-            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-size: 2em;
+            font-family: 'Arial Black', 'Arial', sans-serif;
             font-weight: 900;
             cursor: pointer;
             border-radius: 20px;
@@ -129,7 +132,7 @@
                 0 12px 20px rgba(0,0,0,0.4);
             transition: all 0.2s ease;
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
             position: relative;
             overflow: hidden;
         }
@@ -175,6 +178,7 @@
             padding: 15px 25px;
             border-radius: 10px;
             background: rgba(0, 0, 0, 0.5);
+            font-weight: 500;
         }
 
         .controls-info p {
@@ -190,21 +194,84 @@
             text-shadow: 1px 1px 0px #000;
         }
 
+        /* Mobile optimizations */
         @media (max-width: 768px) {
+            .arcade-border {
+                padding: 30px 20px;
+                margin: 10px;
+                border-width: 6px;
+            }
+
             .game-logo {
-                font-size: 3em;
-                letter-spacing: 3px;
+                font-size: 2.5em;
+                letter-spacing: 2px;
+                margin-bottom: 20px;
+                line-height: 1.1;
+            }
+            
+            .subtitle {
+                font-size: 1.1em;
+                margin-bottom: 15px;
+            }
+
+            .description {
+                font-size: 1em;
+                margin-bottom: 30px;
+                line-height: 1.5;
             }
             
             .play-button {
-                font-size: 2em;
+                font-size: 1.6em;
                 padding: 20px 40px;
-                letter-spacing: 2px;
+                letter-spacing: 1px;
+            }
+
+            .controls-info {
+                font-size: 0.9em;
+                padding: 12px 18px;
+                margin-top: 30px;
+            }
+
+            .version-info {
+                font-size: 0.8em;
+                bottom: 10px;
+                right: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .arcade-border {
+                padding: 25px 15px;
+                margin: 5px;
+                border-width: 4px;
+            }
+
+            .game-logo {
+                font-size: 2em;
+                letter-spacing: 1px;
+                margin-bottom: 15px;
             }
             
-            .arcade-border {
-                padding: 40px 20px;
-                margin: 20px;
+            .subtitle {
+                font-size: 1em;
+                margin-bottom: 12px;
+            }
+
+            .description {
+                font-size: 0.9em;
+                margin-bottom: 25px;
+            }
+            
+            .play-button {
+                font-size: 1.4em;
+                padding: 18px 35px;
+                letter-spacing: 1px;
+            }
+
+            .controls-info {
+                font-size: 0.8em;
+                padding: 10px 15px;
+                margin-top: 25px;
             }
         }
     </style>
@@ -215,9 +282,9 @@
     <div class="welcome-container">
         <div class="arcade-border">
             <h1 class="game-logo">PACMYST</h1>
-            <h2 class="subtitle">MYSTCL ARCADE ADVENTURE</h2>
+            <h2 class="subtitle">MYSTICAL ARCADE ADVENTURE</h2>
             <p class="description">
-                Navigate the cosmic world of PacMyst! Collect basedness and avoid the ghouls. 
+                Navigate the cosmic maze as PacMyst! Collect basedness and avoid the ghosts. 
                 Use Whirl power-ups, and chase them down!! Good Luck and Stay based
             </p>
             
@@ -246,13 +313,6 @@
             
             // Launch the game after brief delay for effect
             setTimeout(() => {
-                // In your OK Computer Terminal, this would navigate to game.html
-                // For now, we'll redirect to a game page or show message
-                
-                // Option 1: For OK Computer Terminal - redirect to separate game file
-                // window.location.href = 'pacmyst-game.html';
-                
-                // Option 2: For testing - show message
                 window.location.href = 'game.html';
                 
                 // Reset button
