@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pacmyst</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #FF1493, #FF6347, #FFD700, #32CD32, #00BFFF, #9370DB);
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            text-align: center;
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-header {
+            margin-bottom: 20px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .game-title {
+            font-size: 3.5em;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-weight: 900;
+            background: linear-gradient(45deg, #FF1493, #FF6347, #FFD700, #32CD32, #00BFFF, #9370DB);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 4px 4px 0px #000;
+            margin-bottom: 15px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 3px solid #FFD700;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+            width: 100%;
+            max-width: 600px;
+            min-width: 400px;
+        }
+
+        .score, .lives, .level {
+            color: #FFD700;
+            text-shadow: 2px 2px 0px #000;
+            font-weight: bold;
+        }
+
+        #gameCanvas {
+            border: 6px solid #000;
+            background: #000;
+            box-shadow: 
+                0 0 40px rgba(255, 20, 147, 0.8), 
+                0 0 80px rgba(50, 205, 50, 0.6), 
+                0 0 120px rgba(0, 191, 255, 0.4),
+                inset 0 0 20px rgba(0, 0, 0, 0.8);
+            border-radius: 20px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .game-controls {
+            margin-top: 20px;
+            font-size: 1em;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .mobile-controls {
+            display: none;
+        }
+
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border: 2px solid #ff0000;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            z-index: 2000;
+            max-width: 90vw;
+        }
+
+        .game-over h2 {
+            color: #ff0000;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+
+        .name-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #FFD700;
+            color: #fff;
+            padding: 10px;
+            font-size: 1.2em;
+            border-radius: 5px;
+            margin: 10px;
+            text-align: center;
+            width: 200px;
+        }
+
+        .leaderboard {
+            margin: 20px 0;
+            font-size: 0.9em;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .leaderboard h3 {
+            color: #FFD700;
+            margin-bottom: 10px;
+        }
+
+        .leaderboard-entry {
+            padding: 5px;
+            border-bottom: 1px solid #333;
+        }
+
+        .restart-btn {
+            background: #0066ff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1em;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 5px;
+            touch-action: manipulation;
+        }
+
+        .restart-btn:hover {
+            background: #0088ff;
+        }
+
+        .restart-btn:active {
+            transform: scale(0.95);
+        }
+
+        .desktop-controls {
+            display: inline;
+        }
+
+        .mobile-controls-text {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .game-container {
+                max-width: 100%;
+            }
+
+            .game-title {
+                font-size: 2.2em;
+                letter-spacing: 2px;
+                margin-bottom: 12px;
+                line-height: 1.1;
+            }
+            
+            .game-stats {
+                font-size: 1em;
+                padding: 12px 15px;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 15px;
+                min-width: auto;
+                width: 95%;
+            }
+            
+            .game-stats > div {
+                flex: 1;
+                min-width: 80px;
+                font-size: 0.95em;
+            }
+
+            .game-controls {
+                font-size: 0.85em;
+                margin-top: 15px;
+                padding: 10px 15px;
+                width: 95%;
+            }
+
+            .game-over {
+                padding: 20px;
+                max-width: 95vw;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+
+            .game-over h2 {
+                font-size: 1.8em;
+                margin-bottom: 12px;
+            }
+
+            .name-input {
+                width: 160px;
+                font-size: 1em;
+                padding: 10px;
+            }
+
+            .restart-btn {
+                padding: 12px 20px;
+                font-size: 1em;
+                margin: 5px;
+            }
+
+            .leaderboard {
+                font-size: 0.9em;
+                max-height: 180px;
+                margin: 18px 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+
+            .game-title {
+                font-size: 1.8em;
+                letter-spacing: 1px;
+            }
+
+            .game-stats {
+                font-size: 0.9em;
+                padding: 10px 12px;
+                gap: 6px;
+            }
+
+            .game-stats > div {
+                font-size: 0.9em;
+                min-width: 70px;
+            }
+
+            .game-controls {
+                font-size: 0.8em;
+                margin-top: 12px;
+                padding: 8px 12px;
+            }
+
+            .game-over {
+                padding: 15px;
+            }
+
+            .game-over h2 {
+                font-size: 1.5em;
+            }
+
+            .name-input {
+                width: 140px;
+                font-size: 0.9em;
+                padding: 8px;
+            }
+
+            .restart-btn {
+                padding: 10px 16px;
+                font-size: 0.95em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1 class="game-title">PACMYST</h1>
+            <div class="game-stats">
+                <div class="score">Score: <span id="score">0</span></div>
+                <div class="level">Level: <span id="level">1</span></div>
+                <div class="lives">Lives: <span id="lives">3</span></div>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas" width="600" height="600"></canvas>
+        
+        <div class="game-controls" id="gameControls">
+            <span class="desktop-controls" id="desktopControls">Desktop: Arrow Keys or WASD</span>
+            <span class="mobile-controls-text" id="mobileControlsText">Mobile: Swipe or use D-pad below</span>
+        </div>
+    </div>
+
+    <div class="mobile-controls" id="mobileControls" style="display: none;">
+        <!-- Hidden - only swipe controls on mobile -->
+    </div>
+
+    <div class="game-over" id="gameOver">
+        <h2>Game Over</h2>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <p>Level Reached: <span id="finalLevel">1</span></p>
+        <input type="text" class="name-input" id="playerName" placeholder="Enter your name" maxlength="15">
+        <br>
+        <button class="restart-btn" onclick="saveScore()">Save Score</button>
+        <button class="restart-btn" onclick="restartGame()">Play Again</button>
+        
+        <div class="leaderboard" id="leaderboard">
+            <h3>🏆 MYSTCL Leaderboard</h3>
+            <div id="leaderboardList"></div>
+        </div>
+    </div>
+
+    <script>
+        class PacmystGame {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.scoreElement = document.getElementById('score');
+                this.livesElement = document.getElementById('lives');
+                this.levelElement = document.getElementById('level');
+                
+                this.gridSize = 40;
+                this.rows = 15;
+                this.cols = 15;
+                
+                this.score = 0;
+                this.lives = 3;
+                this.level = 1;
+                this.gameRunning = false;
+                this.powerMode = false;
+                this.powerModeTimer = 0;
+                
+                this.touchStartX = 0;
+                this.touchStartY = 0;
+                this.touchThreshold = 30;
+                
+                this.leaderboard = [
+                    { name: "MYSTCL", score: 1000, level: 5 },
+                    { name: "Unicorn", score: 800, level: 4 },
+                    { name: "Pixie", score: 600, level: 3 }
+                ];
+                
+                this.maze = this.createMaze();
+                this.player = { x: 7, y: 11, direction: -1, nextDirection: -1 };
+                this.ghosts = [
+                    { x: 7, y: 6, direction: 0, color: '#ff0000', mode: 'scatter' },
+                    { x: 6, y: 6, direction: 2, color: '#ffb8ff', mode: 'scatter' },
+                    { x: 8, y: 6, direction: 2, color: '#00ffff', mode: 'scatter' },
+                    { x: 7, y: 7, direction: 1, color: '#ffb852', mode: 'scatter' }
+                ];
+                
+                this.directions = [
+                    { x: 0, y: -1 },
+                    { x: 1, y: 0 },
+                    { x: 0, y: 1 },
+                    { x: -1, y: 0 }
+                ];
+                
+                this.setupEventListeners();
+                this.setupTouchControls();
+                this.setupCanvas();
+                this.detectDeviceAndSetupControls();
+                this.startGame();
+            }
+            
+            setupCanvas() {
+                // Set proper canvas dimensions based on device
+                const isMobile = window.innerWidth <= 768;
+                
+                if (isMobile) {
+                    const size = Math.min(window.innerWidth - 40, 500);
+                    this.canvas.width = size;
+                    this.canvas.height = size;
+                    this.canvas.style.width = size + 'px';
+                    this.canvas.style.height = size + 'px';
+                } else {
+                    // Larger desktop size
+                    const size = Math.min(window.innerWidth * 0.7, 700);
+                    this.canvas.width = size;
+                    this.canvas.height = size;
+                    this.canvas.style.width = size + 'px';
+                    this.canvas.style.height = size + 'px';
+                }
+                
+                // Recalculate grid size based on canvas size
+                this.gridSize = this.canvas.width / this.cols;
+            }
+            
+            detectDeviceAndSetupControls() {
+                const isMobile = 'ontouchstart' in window || 
+                                navigator.maxTouchPoints > 0 || 
+                                window.innerWidth <= 768;
+                
+                const gameControls = document.getElementById('gameControls');
+                const desktopControls = document.getElementById('desktopControls');
+                const mobileControlsText = document.getElementById('mobileControlsText');
+                
+                if (isMobile) {
+                    desktopControls.style.display = 'none';
+                    mobileControlsText.style.display = 'inline';
+                } else {
+                    desktopControls.style.display = 'inline';
+                    mobileControlsText.style.display = 'none';
+                }
+            }
+            
+            setupTouchControls() {
+                // Only swipe controls on canvas - no visual D-pad
+                this.canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (!this.gameRunning) return;
+                    
+                    const touch = e.touches[0];
+                    this.touchStartX = touch.clientX;
+                    this.touchStartY = touch.clientY;
+                }, { passive: false });
+                
+                this.canvas.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    if (!this.gameRunning) return;
+                    
+                    const touch = e.changedTouches[0];
+                    const deltaX = touch.clientX - this.touchStartX;
+                    const deltaY = touch.clientY - this.touchStartY;
+                    
+                    if (Math.abs(deltaX) > this.touchThreshold || Math.abs(deltaY) > this.touchThreshold) {
+                        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                            this.player.nextDirection = deltaX > 0 ? 1 : 3; // right : left
+                        } else {
+                            this.player.nextDirection = deltaY > 0 ? 2 : 0; // down : up
+                        }
+                    }
+                }, { passive: false });
+                
+                // Prevent zoom on double tap
+                document.addEventListener('touchend', (e) => {
+                    if (e.target.closest('.game-container')) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+            }
+            
+            createMaze() {
+                const maze = Array(this.rows).fill().map(() => Array(this.cols).fill(1));
+                
+                for (let y = 0; y < this.rows; y++) {
+                    for (let x = 0; x < this.cols; x++) {
+                        if (x === 0 || x === this.cols - 1 || y === 0 || y === this.rows - 1) {
+                            maze[y][x] = 0;
+                        }
+                        else if (this.level === 1) {
+                            if ((x === 3 && y >= 3 && y <= 5) ||
+                                (x === 11 && y >= 3 && y <= 5) ||
+                                (x === 3 && y >= 9 && y <= 11) ||
+                                (x === 11 && y >= 9 && y <= 11) ||
+                                (y === 3 && x >= 6 && x <= 8) ||
+                                (y === 11 && x >= 6 && x <= 8)) {
+                                maze[y][x] = 0;
+                            }
+                            else if (x >= 6 && x <= 8 && y >= 5 && y <= 7) {
+                                maze[y][x] = 3;
+                            }
+                            else if ((x === 2 && y === 2) || (x === 12 && y === 2) || 
+                                    (x === 2 && y === 12) || (x === 12 && y === 12)) {
+                                maze[y][x] = 2;
+                            }
+                            else {
+                                maze[y][x] = 1;
+                            }
+                        }
+                        else {
+                            if (x >= 6 && x <= 8 && y >= 5 && y <= 7) {
+                                maze[y][x] = 3;
+                            }
+                            else if ((x === 2 && y === 2) || (x === 12 && y === 2) || 
+                                    (x === 2 && y === 12) || (x === 12 && y === 12)) {
+                                maze[y][x] = 2;
+                            }
+                            else if (x > 1 && x < this.cols - 2 && y > 1 && y < this.rows - 2) {
+                                if (Math.random() > (0.35 - this.level * 0.05)) {
+                                    maze[y][x] = 1;
+                                } else {
+                                    maze[y][x] = 0;
+                                }
+                            }
+                            else {
+                                maze[y][x] = 1;
+                            }
+                        }
+                    }
+                }
+                
+                maze[11][7] = 4;
+                return maze;
+            }
+            
+            setupEventListeners() {
+                document.addEventListener('keydown', (e) => {
+                    if (!this.gameRunning) return;
+                    
+                    switch (e.key) {
+                        case 'ArrowUp':
+                        case 'w':
+                        case 'W':
+                            this.player.nextDirection = 0;
+                            break;
+                        case 'ArrowRight':
+                        case 'd':
+                        case 'D':
+                            this.player.nextDirection = 1;
+                            break;
+                        case 'ArrowDown':
+                        case 's':
+                        case 'S':
+                            this.player.nextDirection = 2;
+                            break;
+                        case 'ArrowLeft':
+                        case 'a':
+                        case 'A':
+                            this.player.nextDirection = 3;
+                            break;
+                    }
+                    e.preventDefault();
+                });
+            }
+            
+            startGame() {
+                this.gameRunning = true;
+                this.gameLoop();
+                this.startPlayerLoop();
+                this.startGhostLoop();
+            }
+            
+            gameLoop() {
+                if (!this.gameRunning) return;
+                
+                this.update();
+                this.draw();
+                
+                setTimeout(() => this.gameLoop(), this.level === 1 ? 200 : 150);
+            }
+            
+            startPlayerLoop() {
+                if (!this.gameRunning) return;
+                
+                const playerSpeed = this.level === 1 ? 200 : 150;
+                
+                this.updatePlayer();
+                this.checkCollisions();
+                this.checkWinCondition();
+                
+                setTimeout(() => this.startPlayerLoop(), playerSpeed);
+            }
+            
+            startGhostLoop() {
+                if (!this.gameRunning) return;
+                
+                const ghostSpeed = this.powerMode ? 460 : (this.level === 1 ? 230 : 173);
+                
+                this.updateGhosts();
+                
+                setTimeout(() => this.startGhostLoop(), ghostSpeed);
+            }
+            
+            update() {
+                if (this.powerModeTimer > 0) {
+                    this.powerModeTimer--;
+                    if (this.powerModeTimer === 0) {
+                        this.powerMode = false;
+                    }
+                }
+            }
+            
+            updatePlayer() {
+                if (this.player.nextDirection === -1) return;
+                
+                const nextX = this.player.x + this.directions[this.player.nextDirection].x;
+                const nextY = this.player.y + this.directions[this.player.nextDirection].y;
+                
+                if (this.canMove(nextX, nextY)) {
+                    this.player.direction = this.player.nextDirection;
+                }
+                
+                if (this.player.direction === -1) return;
+                
+                const newX = this.player.x + this.directions[this.player.direction].x;
+                const newY = this.player.y + this.directions[this.player.direction].y;
+                
+                if (this.canMove(newX, newY)) {
+                    this.player.x = newX;
+                    this.player.y = newY;
+                    
+                    if (this.player.x < 0) this.player.x = this.cols - 1;
+                    if (this.player.x >= this.cols) this.player.x = 0;
+                    
+                    if (this.maze[this.player.y][this.player.x] === 1) {
+                        this.maze[this.player.y][this.player.x] = 4;
+                        this.score += 10;
+                        this.scoreElement.textContent = this.score;
+                    } else if (this.maze[this.player.y][this.player.x] === 2) {
+                        this.maze[this.player.y][this.player.x] = 4;
+                        this.score += 50;
+                        this.scoreElement.textContent = this.score;
+                        this.powerMode = true;
+                        this.powerModeTimer = 50;
+                    }
+                } else {
+                    this.player.direction = -1;
+                }
+            }
+            
+            updateGhosts() {
+                this.ghosts.forEach(ghost => {
+                    const possibleDirections = [];
+                    
+                    for (let i = 0; i < 4; i++) {
+                        const newX = ghost.x + this.directions[i].x;
+                        const newY = ghost.y + this.directions[i].y;
+                        
+                        if (this.canMoveGhost(newX, newY) && i !== (ghost.direction + 2) % 4) {
+                            possibleDirections.push(i);
+                        }
+                    }
+                    
+                    if (possibleDirections.length === 0) {
+                        ghost.direction = (ghost.direction + 2) % 4;
+                    } else if (possibleDirections.length === 1) {
+                        ghost.direction = possibleDirections[0];
+                    } else {
+                        if (this.powerMode) {
+                            const playerDist = possibleDirections.map(dir => {
+                                const newX = ghost.x + this.directions[dir].x;
+                                const newY = ghost.y + this.directions[dir].y;
+                                return Math.abs(newX - this.player.x) + Math.abs(newY - this.player.y);
+                            });
+                            ghost.direction = possibleDirections[playerDist.indexOf(Math.max(...playerDist))];
+                        } else {
+                            if (Math.random() > 0.6) {
+                                const playerDist = possibleDirections.map(dir => {
+                                    const newX = ghost.x + this.directions[dir].x;
+                                    const newY = ghost.y + this.directions[dir].y;
+                                    return Math.abs(newX - this.player.x) + Math.abs(newY - this.player.y);
+                                });
+                                ghost.direction = possibleDirections[playerDist.indexOf(Math.min(...playerDist))];
+                            } else {
+                                ghost.direction = possibleDirections[Math.floor(Math.random() * possibleDirections.length)];
+                            }
+                        }
+                    }
+                    
+                    const newX = ghost.x + this.directions[ghost.direction].x;
+                    const newY = ghost.y + this.directions[ghost.direction].y;
+                    
+                    if (this.canMoveGhost(newX, newY)) {
+                        ghost.x = newX;
+                        ghost.y = newY;
+                        
+                        if (ghost.x < 0) ghost.x = this.cols - 1;
+                        if (ghost.x >= this.cols) ghost.x = 0;
+                    }
+                });
+            }
+            
+            canMove(x, y) {
+                if (x < 0 || x >= this.cols || y < 0 || y >= this.rows) {
+                    return x < 0 || x >= this.cols;
+                }
+                return this.maze[y][x] !== 0;
+            }
+            
+            canMoveGhost(x, y) {
+                if (x < 0 || x >= this.cols || y < 0 || y >= this.rows) {
+                    return x < 0 || x >= this.cols;
+                }
+                return this.maze[y][x] !== 0;
+            }
+            
+            checkCollisions() {
+                this.ghosts.forEach((ghost, index) => {
+                    if (ghost.x === this.player.x && ghost.y === this.player.y) {
+                        if (this.powerMode) {
+                            this.score += 200;
+                            this.scoreElement.textContent = this.score;
+                            ghost.x = 7;
+                            ghost.y = 6;
+                        } else {
+                            this.lives--;
+                            this.livesElement.textContent = this.lives;
+                            
+                            if (this.lives <= 0) {
+                                this.gameOver();
+                            } else {
+                                this.player.x = 7;
+                                this.player.y = 11;
+                                this.player.direction = -1;
+                                this.player.nextDirection = -1;
+                                
+                                this.ghosts.forEach((g, i) => {
+                                    g.x = 7 + (i % 2 === 0 ? 0 : i % 4 - 2);
+                                    g.y = 6 + Math.floor(i / 2);
+                                    g.direction = 0;
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+            
+            checkWinCondition() {
+                let pelletsRemaining = 0;
+                for (let y = 0; y < this.rows; y++) {
+                    for (let x = 0; x < this.cols; x++) {
+                        if (this.maze[y][x] === 1 || this.maze[y][x] === 2) {
+                            pelletsRemaining++;
+                        }
+                    }
+                }
+                
+                if (pelletsRemaining === 0) {
+                    this.level++;
+                    this.levelElement.textContent = this.level;
+                    
+                    if (this.lives < 5) {
+                        this.lives++;
+                        this.livesElement.textContent = this.lives;
+                    }
+                    
+                    this.maze = this.createMaze();
+                    
+                    this.player.x = 7;
+                    this.player.y = 11;
+                    this.player.direction = -1;
+                    this.player.nextDirection = -1;
+                    
+                    this.ghosts.forEach((ghost, i) => {
+                        ghost.x = 7 + (i % 2 === 0 ? 0 : i % 4 - 2);
+                        ghost.y = 6 + Math.floor(i / 2);
+                        ghost.direction = 0;
+                    });
+                }
+            }
+            
+            draw() {
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                for (let y = 0; y < this.rows; y++) {
+                    for (let x = 0; x < this.cols; x++) {
+                        const cellX = x * this.gridSize;
+                        const cellY = y * this.gridSize;
+                        
+                        switch (this.maze[y][x]) {
+                            case 0:
+                                const wallGradient = this.ctx.createLinearGradient(cellX, cellY, cellX + this.gridSize, cellY + this.gridSize);
+                                wallGradient.addColorStop(0, '#9370DB');
+                                wallGradient.addColorStop(0.5, '#4169E1');
+                                wallGradient.addColorStop(1, '#00BFFF');
+                                this.ctx.fillStyle = wallGradient;
+                                this.ctx.fillRect(cellX, cellY, this.gridSize, this.gridSize);
+                                
+                                this.ctx.strokeStyle = '#FFD700';
+                                this.ctx.lineWidth = 1;
+                                this.ctx.strokeRect(cellX, cellY, this.gridSize, this.gridSize);
+                                break;
+                            case 1:
+                                this.drawBlueToken(cellX + this.gridSize/2, cellY + this.gridSize/2, 3);
+                                break;
+                            case 2:
+                                this.drawRainbowSwirl(cellX + this.gridSize/2, cellY + this.gridSize/2, this.gridSize/2 - 2);
+                                break;
+                            case 3:
+                                this.ctx.fillStyle = '#333';
+                                this.ctx.fillRect(cellX, cellY, this.gridSize, this.gridSize);
+                                break;
+                        }
+                    }
+                }
+                
+                const playerX = this.player.x * this.gridSize + this.gridSize/2;
+                const playerY = this.player.y * this.gridSize + this.gridSize/2;
+                
+                this.drawCosmicUnicorn(playerX, playerY, this.gridSize/2 - 1);
+                
+                this.ghosts.forEach(ghost => {
+                    const ghostX = ghost.x * this.gridSize + this.gridSize/2;
+                    const ghostY = ghost.y * this.gridSize + this.gridSize/2;
+                    
+                    this.drawPurplePixie(ghostX, ghostY, this.gridSize/2 - 1, ghost);
+                });
+            }
+            
+            drawCosmicUnicorn(x, y, radius) {
+                const ctx = this.ctx;
+                
+                const bodyGradient = ctx.createLinearGradient(x, y - radius, x, y + radius);
+                bodyGradient.addColorStop(0, '#FFD700');
+                bodyGradient.addColorStop(0.6, '#FFC107');
+                bodyGradient.addColorStop(1, '#FF8F00');
+                
+                ctx.fillStyle = bodyGradient;
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                if (this.player.direction !== -1) {
+                    ctx.fillStyle = '#000';
+                    ctx.beginPath();
+                    const mouthAngle = this.player.direction * Math.PI/2;
+                    ctx.moveTo(x, y);
+                    ctx.arc(x, y, radius, mouthAngle - 0.6, mouthAngle + 0.6);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                // Horn
+                ctx.fillStyle = '#FFFACD';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x - radius * 0.05, y - radius * 0.8);
+                ctx.lineTo(x, y - radius * 1.05);
+                ctx.lineTo(x + radius * 0.05, y - radius * 0.8);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                
+                // Glasses frames
+                ctx.strokeStyle = '#FFF';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(x - radius * 0.32, y - radius * 0.08, radius * 0.25, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(x + radius * 0.32, y - radius * 0.08, radius * 0.25, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Blue lens
+                const blueGradient = ctx.createRadialGradient(
+                    x - radius * 0.32, y - radius * 0.08, 0,
+                    x - radius * 0.32, y - radius * 0.08, radius * 0.22
+                );
+                blueGradient.addColorStop(0, '#87CEEB');
+                blueGradient.addColorStop(0.7, '#2196F3');
+                blueGradient.addColorStop(1, '#0D47A1');
+                
+                ctx.fillStyle = blueGradient;
+                ctx.beginPath();
+                ctx.arc(x - radius * 0.32, y - radius * 0.08, radius * 0.22, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Red lens
+                const redGradient = ctx.createRadialGradient(
+                    x + radius * 0.32, y - radius * 0.08, 0,
+                    x + radius * 0.32, y - radius * 0.08, radius * 0.22
+                );
+                redGradient.addColorStop(0, '#FF7043');
+                redGradient.addColorStop(0.7, '#F44336');
+                redGradient.addColorStop(1, '#B71C1C');
+                
+                ctx.fillStyle = redGradient;
+                ctx.beginPath();
+                ctx.arc(x + radius * 0.32, y - radius * 0.08, radius * 0.22, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Bridge
+                ctx.strokeStyle = '#FFF';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(x - radius * 0.08, y - radius * 0.08);
+                ctx.lineTo(x + radius * 0.08, y - radius * 0.08);
+                ctx.stroke();
+            }
+            
+            drawPurplePixie(x, y, radius, ghost) {
+                const ctx = this.ctx;
+                
+                let bodyColor = '#9C27B0';
+                if (this.powerMode) {
+                    bodyColor = this.powerModeTimer % 10 < 5 ? '#FF69B4' : '#FFB6C1';
+                }
+                
+                const bodyGradient = ctx.createLinearGradient(x, y - radius, x, y + radius);
+                bodyGradient.addColorStop(0, bodyColor);
+                bodyGradient.addColorStop(0.5, this.powerMode ? '#FF1493' : '#7B1FA2');
+                bodyGradient.addColorStop(1, this.powerMode ? '#C2185B' : '#4A148C');
+                
+                ctx.fillStyle = bodyGradient;
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Sunglasses
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(x - radius * 0.3, y - radius * 0.15, radius * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x + radius * 0.3, y - radius * 0.15, radius * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Bridge
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(x - radius * 0.1, y - radius * 0.15);
+                ctx.lineTo(x + radius * 0.1, y - radius * 0.15);
+                ctx.stroke();
+            }
+            
+            drawBlueToken(x, y, radius) {
+                const ctx = this.ctx;
+                const actualRadius = Math.max(radius, 8);
+                
+                const gradient = ctx.createRadialGradient(x - actualRadius * 0.3, y - actualRadius * 0.3, 0, x, y, actualRadius);
+                gradient.addColorStop(0, '#64B5F6');
+                gradient.addColorStop(0.3, '#2196F3');
+                gradient.addColorStop(0.7, '#1976D2');
+                gradient.addColorStop(1, '#0D47A1');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, actualRadius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.arc(x, y, actualRadius * 0.35, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#1976D2';
+                ctx.fillRect(x - actualRadius * 0.6, y - actualRadius * 0.12, actualRadius * 1.2, actualRadius * 0.24);
+            }
+            
+            drawRainbowSwirl(x, y, radius) {
+                const ctx = this.ctx;
+                const time = Date.now() * 0.01;
+                
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(time * 0.15);
+                
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
+                
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2;
+                    const startAngle = angle;
+                    const endAngle = angle + Math.PI / 3;
+                    
+                    ctx.fillStyle = colors[i];
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.arc(0, 0, radius, startAngle, endAngle);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.beginPath();
+                ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+            
+            gameOver() {
+                this.gameRunning = false;
+                document.getElementById('finalScore').textContent = this.score;
+                document.getElementById('finalLevel').textContent = this.level;
+                document.getElementById('gameOver').style.display = 'block';
+                this.loadLeaderboard();
+            }
+            
+            loadLeaderboard() {
+                const leaderboardList = document.getElementById('leaderboardList');
+                
+                this.leaderboard.sort((a, b) => b.score - a.score);
+                const top10 = this.leaderboard.slice(0, 10);
+                
+                leaderboardList.innerHTML = top10.map((entry, index) => 
+                    `<div class="leaderboard-entry">
+                        ${index + 1}. ${entry.name} - ${entry.score} (Level ${entry.level})
+                    </div>`
+                ).join('');
+            }
+            
+            saveScore(name, score, level) {
+                this.leaderboard.push({ name, score, level });
+                this.leaderboard.sort((a, b) => b.score - a.score);
+                this.leaderboard = this.leaderboard.slice(0, 20);
+                this.loadLeaderboard();
+            }
+        }
+        
+        function saveScore() {
+            const name = document.getElementById('playerName').value.trim() || 'Anonymous';
+            if (game && game.score > 0) {
+                game.saveScore(name, game.score, game.level);
+            }
+        }
+        
+        let game;
+        
+        function startGame() {
+            game = new PacmystGame();
+        }
+        
+        function restartGame() {
+            document.getElementById('gameOver').style.display = 'none';
+            startGame();
+        }
+        
+        window.addEventListener('load', startGame);
+    </script>
+</body>
+</html>
